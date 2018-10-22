@@ -19,6 +19,7 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Read
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDescription;
 
 import gov.usgs.aqcu.calc.LastValidVisitCalculator;
+import gov.usgs.aqcu.model.SVPReportMetadata;
 import gov.usgs.aqcu.model.SVPReportReading;
 import gov.usgs.aqcu.model.SiteVisitPeakReport;
 import gov.usgs.aqcu.parameter.SiteVisitPeakRequestParameters;
@@ -52,32 +53,34 @@ public class SiteVisitPeakReportBuilderService {
 
 	public SiteVisitPeakReport buildReport(SiteVisitPeakRequestParameters requestParameters, String requestingUser) {
 		SiteVisitPeakReport report = new SiteVisitPeakReport();
+		SVPReportMetadata reportMetadata = new SVPReportMetadata();
+		LOG.debug("This looks like a boolean in the JSON but it's not in the request?");
+		reportMetadata.setExcludeComments(!requestParameters.getExcludedComments().isEmpty());
+		
 		List<SVPReportReading> readings = new ArrayList<>();
 		
 		LOG.debug("Requesting time series");
 		TimeSeriesDescription timeSeriesDescription = timeSeriesDescriptionListService.getTimeSeriesDescription(requestParameters.getPrimaryTimeseriesIdentifier());
+		reportMetadata.setTimeseriesLabel(timeSeriesDescription.getIdentifier());
 
 		ZoneOffset zoneOffset = TimeSeriesUtils.getZoneOffset(timeSeriesDescription);
 		Instant startInstant = requestParameters.getStartInstant(zoneOffset);
+		reportMetadata.setStartDate(requestParameters.getStartInstant(ZoneOffset.UTC));
 		Instant endInstant = requestParameters.getEndInstant(zoneOffset);
+		reportMetadata.setEndDate(requestParameters.getEndInstant(ZoneOffset.UTC));
 		String locationIdentifier = timeSeriesDescription.getLocationIdentifier();
+		reportMetadata.setStationId(locationIdentifier);
 		
 		LOG.debug("Requesting field visits for time series location in date range");
 		FieldVisitDescriptionListServiceResponse fieldVisitDescriptionListServiceResponse = fieldVisitDescriptionListService.get(locationIdentifier, startInstant, endInstant);
 		
-		LOG.debug("For every visit");
 		for (FieldVisitDescription fieldVisitDescription : fieldVisitDescriptionListServiceResponse.getFieldVisitDescriptions()) {
-			LOG.debug("Get visit start time");
-			Instant visitTime = fieldVisitDescription.getStartTime();
-			LOG.debug("Requesting field visit data for the visit");
 			FieldVisitDataServiceResponse fieldVisitDataServiceResponse = fieldVisitDataService.get(fieldVisitDescription.getIdentifier());
-			LOG.debug("Get inspection activity");
 			InspectionActivity inspectionActivity = fieldVisitDataServiceResponse.getInspectionActivity();
-			LOG.debug("For every reading in the inspection activity");
 			for (Reading reading : inspectionActivity.getReadings()) {
 				if (ReadingType.ExtremeMax.equals(reading.getReadingType())) {
 					LOG.debug("Only want Extreme Max readings");
-					readings.add(new SVPReportReading(fieldVisitDescription, inspectionActivity.getParty(), reading));
+					readings.add(new SVPReportReading(fieldVisitDescription.getStartTime(), inspectionActivity.getParty(), reading));
 				}
 			}
 		}
@@ -86,7 +89,7 @@ public class SiteVisitPeakReportBuilderService {
 		new LastValidVisitCalculator().fill(readings);
 		
 		report.setReadings(readings);
-		
+		report.setReportMetadata(reportMetadata);
 		return report;
 	}
 }

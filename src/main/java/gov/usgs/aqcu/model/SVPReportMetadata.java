@@ -5,7 +5,7 @@ import java.time.Instant;
 public class SVPReportMetadata {
 
 	private Instant endDate;
-	private String title;
+	private String title = "Site Visit Peak";
 	private String timeseriesLabel; //TODO yes the s is lowercase, fix here and repgen?
 	private String stationName;
 	private Instant startDate;
