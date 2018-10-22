@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
 
 public class SVPReportReading {
 
 	private Instant visitTime;
-	private List<String> comments = new ArrayList<>();
-	private Instant lastVisitPrior; // not used in the actual report, only to get AssociatedIv
+	private List<String> comments = new ArrayList<>(); // why is this a List<String> when it's only a String in Reading?
+	private Instant lastVisitPrior; // not used in the actual report, only to get AssociatedIv I think
 	private Instant time;
 	private String monitoringMethod;
 	private String uncertainty;
@@ -20,10 +21,13 @@ public class SVPReportReading {
 	private String associatedIvValue;
 	private Instant associatedIvTime;
 	private List<AssociatedIvQualifier> associatedIvQualifiers;
-
+	private TimeSeriesDataServiceResponse timeSeriesDataServiceResponse;
+	
 	public SVPReportReading(Instant visitTime, String party, Reading reading) {
 		this.visitTime = visitTime;
-		this.comments.add(reading.getComments());
+		if (null != reading.getComments()) {
+			this.comments.add(reading.getComments());
+		}
 //		lastVisitPrior is set after creation
 		this.time = reading.getTime();
 		this.monitoringMethod = reading.getMonitoringMethod();
@@ -130,5 +134,13 @@ public class SVPReportReading {
 
 	public void setAssociatedIvQualifiers(List<AssociatedIvQualifier> associatedIvQualifiers) {
 		this.associatedIvQualifiers = associatedIvQualifiers;
+	}
+
+	public TimeSeriesDataServiceResponse getTimeSeriesDataServiceResponse() {
+		return timeSeriesDataServiceResponse;
+	}
+
+	public void setTimeSeriesDataServiceResponse(TimeSeriesDataServiceResponse timeSeriesDataServiceResponse) {
+		this.timeSeriesDataServiceResponse = timeSeriesDataServiceResponse;
 	}
 }

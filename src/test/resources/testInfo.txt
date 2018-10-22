@@ -87,3 +87,52 @@ OLD VERSION AQCU resulting JSON =
     "startDate": "2017-10-01T00:00:00Z"
   }
 }
+
+JSON required for repgen = 
+{
+  "readings": [
+    {
+      "visitTime": "2017-11-15T12:21:00-05:00",
+      "comments": [
+        "OFFICE NOTE BY JRC ON 2/22/2018: Changed elevation of HWM due to incorrect math in comments on SV. See comments section for explanation."
+      ],
+      "time": "2017-10-30T11:00:00-05:00",
+      "uncertainty": "0.20",
+      "monitoringMethod": "Gage height, high water mark",
+      "value": "7.04",
+      "party": "JRC/HSG"
+    },
+    {
+      "visitTime": "2018-05-15T08:26:00-05:00",
+      "comments": [],
+      "time": "2018-04-30T20:45:00-05:00",
+      "uncertainty": "0.30",
+      "monitoringMethod": "Gage height, high water mark",
+      "value": "11.44",
+      "party": "JRC/HSG",
+      "associatedIvValue": "11.46",
+      "associatedIvTime": "2018-04-30T21:00:00-05:00",
+      "associatedIvQualifiers": [
+        {
+          "identifier": "EQUIP",
+          "code": "EQP",
+          "displayName": "Equipment malfunction",
+        },
+        {
+          "identifier": "EQUIP",
+          "code": "EQP",
+          "displayName": "Equipment malfunction",
+        }
+      ]
+    }
+  ],
+  "reportMetadata": {
+    "timeseriesLabel": "Gage height.ft@01010000",
+    "excludeComments": false,
+    "startDate": "2017-10-01T00:00:00Z"
+    "endDate": "2018-10-22T23:59:59.999999999Z",
+    "title": "Site Visit Peak",
+    "stationName": "St. John River at Ninemile Bridge, Maine",
+    "stationId": "01010000",
+  }
+}
