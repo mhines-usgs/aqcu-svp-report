@@ -1,0 +1,21 @@
+aqcu:
+  reports:
+    webservice: "http://test.gov/timeseries-ws/"
+javaToR:
+  service:
+    endpoint: "https://localhost:7500"
+aquarius:
+  service:
+    endpoint: "https://test-aquarius.gov/"
+    user: "test"
+    password: "test"
+    retries:
+      unauthorized: 1
+security:
+  require-ssl: true
+  basic:
+    enabled: false
+  oauth2:
+    resource:
+      filter-order: 3
+      id: resource-id

@@ -1,0 +1,66 @@
+server:
+  port: ${serverPort:8443}
+  use-forward-headers: true
+  ssl:
+    key-store: ${keystoreLocation}
+    key-store-password: ${keystorePassword}
+    key-password: ${keystorePassword}
+    key-alias: ${keystoreSSLKey:tomcat}
+
+javaToR:
+  service:
+    endpoint: ${javaToRServiceEndpoint}
+
+aquarius:
+  service:
+    endpoint: ${aquariusServiceEndpoint}
+    user: ${aquariusServiceUser}
+    password: ${aquariusServicePassword}
+    retries:
+      unauthorized: ${aquariusUnauthorizedRetires:3}
+
+security:
+  require-ssl: true
+  basic:
+    enabled: false
+  oauth2:
+    resource:
+      filter-order: 3
+      id: ${oauthResourceId}
+      jwt:
+        keyUri: ${oauthResourceTokenKeyUri}
+
+management:
+  security:
+    enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+feign:
+  hystrix:
+    enabled: true
+
+hystrix:
+  shareSecurityContext: true
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: THREAD
+          thread:
+            timeoutInMilliseconds: ${hystrixThreadTimeout}
+  threadpool:
+    default:
+      maxQueueSize: ${hystrixMaxQueueSize:200}
+      queueSizeRejectionThreshold: ${hystrixMaxQueueSize:200}
+      coreSize: ${hystrixThreadPoolSize:10}
+
+spring:
+  profiles:
+    active: default, swagger
+  application:
+    name: aqcu-svp-report
+  jmx:
+    default-domain: aqcu-svp-report
