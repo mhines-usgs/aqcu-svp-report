@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
 
 public class SVPReportReading {
 
@@ -21,7 +20,6 @@ public class SVPReportReading {
 	private String associatedIvValue;
 	private Instant associatedIvTime;
 	private List<AssociatedIvQualifier> associatedIvQualifiers;
-	private TimeSeriesDataServiceResponse timeSeriesDataServiceResponse;
 	
 	public SVPReportReading(Instant visitTime, String party, Reading reading) {
 		this.visitTime = visitTime;
@@ -134,13 +132,5 @@ public class SVPReportReading {
 
 	public void setAssociatedIvQualifiers(List<AssociatedIvQualifier> associatedIvQualifiers) {
 		this.associatedIvQualifiers = associatedIvQualifiers;
-	}
-
-	public TimeSeriesDataServiceResponse getTimeSeriesDataServiceResponse() {
-		return timeSeriesDataServiceResponse;
-	}
-
-	public void setTimeSeriesDataServiceResponse(TimeSeriesDataServiceResponse timeSeriesDataServiceResponse) {
-		this.timeSeriesDataServiceResponse = timeSeriesDataServiceResponse;
 	}
 }
