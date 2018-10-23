@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Fiel
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescriptionListServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.InspectionActivity;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.QualifierMetadata;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ReadingType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
@@ -29,6 +31,7 @@ import gov.usgs.aqcu.parameter.SiteVisitPeakRequestParameters;
 import gov.usgs.aqcu.retrieval.FieldVisitDataService;
 import gov.usgs.aqcu.retrieval.FieldVisitDescriptionListService;
 import gov.usgs.aqcu.retrieval.LocationDescriptionListService;
+import gov.usgs.aqcu.retrieval.QualifierLookupService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDataCorrectedService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.util.TimeSeriesUtils;
@@ -45,6 +48,7 @@ public class SiteVisitPeakReportBuilderService {
 	private FieldVisitDataService fieldVisitDataService;
 	private LocationDescriptionListService locationDescriptionListService;
 	private TimeSeriesDataCorrectedService timeSeriesDataCorrectedService;
+	private QualifierLookupService qualifierLookupService;
 
 	@Autowired
 	public SiteVisitPeakReportBuilderService(
@@ -52,12 +56,14 @@ public class SiteVisitPeakReportBuilderService {
 			FieldVisitDescriptionListService fieldVisitDescriptionListService,
 			FieldVisitDataService fieldVisitDataService,
 			LocationDescriptionListService locationDescriptionListService,
-			TimeSeriesDataCorrectedService timeSeriesDataCorrectedService) {
+			TimeSeriesDataCorrectedService timeSeriesDataCorrectedService,
+			QualifierLookupService qualifierLookupService) {
 		this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
 		this.fieldVisitDescriptionListService = fieldVisitDescriptionListService;
 		this.fieldVisitDataService = fieldVisitDataService;
 		this.locationDescriptionListService = locationDescriptionListService;
 		this.timeSeriesDataCorrectedService = timeSeriesDataCorrectedService;
+		this.qualifierLookupService = qualifierLookupService;
 	}
 
 	public SiteVisitPeakReport buildReport(SiteVisitPeakRequestParameters requestParameters, String requestingUser) {
@@ -100,13 +106,14 @@ public class SiteVisitPeakReportBuilderService {
 		LOG.debug("Add lastVisitPrior to each reading, maybe?");
 		new LastValidVisitCalculator().fill(readings);
 		
-		//find associated IV values - this attempt killed it
 		for (SVPReportReading reading : readings) {
 			if (null != reading.getLastVisitPrior()) {
 				TimeSeriesDataServiceResponse timeSeriesDataServiceResponse = timeSeriesDataCorrectedService.getRawResponse(requestParameters.getPrimaryTimeseriesIdentifier(), reading.getLastVisitPrior(), reading.getVisitTime());
-				for (Qualifier qualifier : timeSeriesDataServiceResponse.getQualifiers()) {
-					AssociatedIvQualifier associatedIvQualifier = new AssociatedIvQualifier(qualifier);
-					// no idea where code and display name come from
+				ArrayList<Qualifier> qualifiers = timeSeriesDataServiceResponse.getQualifiers();
+				Map<String, QualifierMetadata> qualifierMetdata = qualifierLookupService.getByQualifierList(qualifiers);
+				for (Qualifier qualifier : qualifiers) {
+					QualifierMetadata qualifierMetadata = qualifierMetdata.get(qualifier.getIdentifier());
+					AssociatedIvQualifier associatedIvQualifier = new AssociatedIvQualifier(qualifierMetadata);
 					reading.getAssociatedIvQualifiers().add(associatedIvQualifier);
 				}
 				

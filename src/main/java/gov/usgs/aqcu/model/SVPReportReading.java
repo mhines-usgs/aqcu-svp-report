@@ -10,7 +10,7 @@ public class SVPReportReading {
 
 	private Instant visitTime;
 	private List<String> comments = new ArrayList<>(); // why is this a List<String> when it's only a String in Reading?
-	private Instant lastVisitPrior; // not used in the actual report, only to get AssociatedIv I think
+	private Instant lastVisitPrior; // not used in the actual report, only to get AssociatedIv
 	private Instant time;
 	private String monitoringMethod;
 	private String uncertainty;
@@ -127,6 +127,9 @@ public class SVPReportReading {
 	}
 
 	public List<AssociatedIvQualifier> getAssociatedIvQualifiers() {
+		if (null == associatedIvQualifiers) {
+			associatedIvQualifiers = new ArrayList<>();
+		}
 		return associatedIvQualifiers;
 	}
 
