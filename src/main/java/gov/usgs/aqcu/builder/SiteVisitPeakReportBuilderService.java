@@ -14,12 +14,14 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Fiel
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescription;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescriptionListServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.InspectionActivity;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ReadingType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDescription;
 
 import gov.usgs.aqcu.calc.LastValidVisitCalculator;
+import gov.usgs.aqcu.model.AssociatedIvQualifier;
 import gov.usgs.aqcu.model.SVPReportMetadata;
 import gov.usgs.aqcu.model.SVPReportReading;
 import gov.usgs.aqcu.model.SiteVisitPeakReport;
@@ -99,13 +101,21 @@ public class SiteVisitPeakReportBuilderService {
 		new LastValidVisitCalculator().fill(readings);
 		
 		//find associated IV values - this attempt killed it
-//		for (SVPReportReading reading : readings) {
-//			TimeSeriesDataServiceResponse timeSeriesDataServiceResponse = timeSeriesDataCorrectedService.get(requestParameters.getPrimaryTimeseriesIdentifier(), reading.getLastVisitPrior(), reading.getVisitTime());
-//			reading.setTimeSeriesDataServiceResponse(timeSeriesDataServiceResponse);
-//			MinMaxWhat?
-//		}
-		
-		
+		for (SVPReportReading reading : readings) {
+			if (null != reading.getLastVisitPrior()) {
+				TimeSeriesDataServiceResponse timeSeriesDataServiceResponse = timeSeriesDataCorrectedService.getRawResponse(requestParameters.getPrimaryTimeseriesIdentifier(), reading.getLastVisitPrior(), reading.getVisitTime());
+				for (Qualifier qualifier : timeSeriesDataServiceResponse.getQualifiers()) {
+					AssociatedIvQualifier associatedIvQualifier = new AssociatedIvQualifier(qualifier);
+					// no idea where code and display name come from
+					reading.getAssociatedIvQualifiers().add(associatedIvQualifier);
+				}
+				
+//				need to max/min the points
+				timeSeriesDataServiceResponse.getPoints();
+//				maxTime ==> reading.setAssociatedIvTime(associatedIvTime);
+//				maxVale ==> reading.setAssociatedIvValue(associatedIvValue);
+			}
+		}
 		
 		report.setReadings(readings);
 		report.setReportMetadata(reportMetadata);

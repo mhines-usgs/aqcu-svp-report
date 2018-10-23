@@ -1,10 +1,16 @@
 package gov.usgs.aqcu.model;
 
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
+
 public class AssociatedIvQualifier {
 	
 	private String identifier;
 	private String code;
 	private String displayName;
+
+	public AssociatedIvQualifier(Qualifier qualifier) {
+		this.identifier = qualifier.getIdentifier();
+	}
 
 	public String getIdentifier() {
 		return identifier;

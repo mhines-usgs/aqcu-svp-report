@@ -21,20 +21,13 @@ public class TimeSeriesDataCorrectedService {
 		this.aquariusRetrievalService = aquariusRetrievalService;
 	}
 
-	public TimeSeriesDataServiceResponse get(String timeSeriesIdentifier, Instant startDate, Instant endDate) {
-		try {
+	public TimeSeriesDataServiceResponse getRawResponse(String primaryTimeseriesIdentifier, Instant startDate, Instant endDate) {
 		TimeSeriesDataCorrectedServiceRequest request = new TimeSeriesDataCorrectedServiceRequest()
-				.setTimeSeriesUniqueId(timeSeriesIdentifier)
+				.setTimeSeriesUniqueId(primaryTimeseriesIdentifier)
 				.setQueryFrom(startDate)
-				.setQueryTo(endDate)
-				.setApplyRounding(true)
-				.setIncludeGapMarkers(true);
+				.setIncludeGapMarkers(true)
+				.setQueryTo(endDate);
 		TimeSeriesDataServiceResponse timeSeriesResponse = aquariusRetrievalService.executePublishApiRequest(request);
 		return timeSeriesResponse;
-		} catch (Exception e) {
-			String msg = "An unexpected error occurred while attempting to fetch FieldVisitDescriptionListServiceRequest from Aquarius: ";
-			LOG.error(msg, e);
-			throw new RuntimeException(msg, e);
-		}
 	}
 }
