@@ -1,10 +1,12 @@
 package gov.usgs.aqcu.builder;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +23,12 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Read
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ReadingType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDescription;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesPoint;
 
 import gov.usgs.aqcu.calc.LastValidVisitCalculator;
 import gov.usgs.aqcu.model.AssociatedIvQualifier;
+import gov.usgs.aqcu.model.MinMaxData;
+import gov.usgs.aqcu.model.MinMaxPoint;
 import gov.usgs.aqcu.model.SVPReportMetadata;
 import gov.usgs.aqcu.model.SVPReportReading;
 import gov.usgs.aqcu.model.SiteVisitPeakReport;
@@ -34,6 +39,8 @@ import gov.usgs.aqcu.retrieval.LocationDescriptionListService;
 import gov.usgs.aqcu.retrieval.QualifierLookupService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDataCorrectedService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
+import gov.usgs.aqcu.util.BigDecimalSummaryStatistics;
+import gov.usgs.aqcu.util.DoubleWithDisplayUtil;
 import gov.usgs.aqcu.util.TimeSeriesUtils;
 
 @Service
@@ -116,16 +123,35 @@ public class SiteVisitPeakReportBuilderService {
 					AssociatedIvQualifier associatedIvQualifier = new AssociatedIvQualifier(qualifierMetadata);
 					reading.getAssociatedIvQualifiers().add(associatedIvQualifier);
 				}
-				
-//				need to max/min the points
-				timeSeriesDataServiceResponse.getPoints();
-//				maxTime ==> reading.setAssociatedIvTime(associatedIvTime);
-//				maxVale ==> reading.setAssociatedIvValue(associatedIvValue);
+				MinMaxData minMaxData = getMinMaxData(timeSeriesDataServiceResponse.getPoints());
+				MinMaxPoint minMaxPoint = minMaxData.getMax().get(0);
+				reading.setAssociatedIvTime(minMaxPoint.getTime());
+				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
 			}
 		}
 		
 		report.setReadings(readings);
 		report.setReportMetadata(reportMetadata);
 		return report;
+	}
+
+	/**
+	 * This method should only be called if the timeSeriesPoints list is not null.
+	 */
+	protected MinMaxData getMinMaxData(List<TimeSeriesPoint> timeSeriesPoints) {
+		Map<BigDecimal, List<MinMaxPoint>> minMaxPoints = timeSeriesPoints.parallelStream()
+				.map(x -> {
+					MinMaxPoint point = new MinMaxPoint(x.getTimestamp().getDateTimeOffset(), DoubleWithDisplayUtil.getRoundedValue(x.getValue()));
+					return point;
+				})
+				.filter(x -> x.getValue() != null)
+				.collect(Collectors.groupingByConcurrent(MinMaxPoint::getValue));
+
+		BigDecimalSummaryStatistics stats = minMaxPoints.keySet().parallelStream()
+				.collect(BigDecimalSummaryStatistics::new,
+						BigDecimalSummaryStatistics::accept,
+						BigDecimalSummaryStatistics::combine);
+
+		return new MinMaxData(stats.getMin(), stats.getMax(), minMaxPoints);
 	}
 }
