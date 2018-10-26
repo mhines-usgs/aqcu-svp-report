@@ -124,7 +124,7 @@ public class SiteVisitPeakReportBuilderService {
 					reading.getAssociatedIvQualifiers().add(associatedIvQualifier);
 				}
 				MinMaxData minMaxData = getMinMaxData(timeSeriesDataServiceResponse.getPoints());
-				MinMaxPoint minMaxPoint = minMaxData.getMax().get(0);
+				MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
 				reading.setAssociatedIvTime(minMaxPoint.getTime());
 				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
 			}
