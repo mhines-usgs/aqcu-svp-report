@@ -1,11 +1,9 @@
 package gov.usgs.aqcu.builder;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,6 @@ import gov.usgs.aqcu.retrieval.QualifierLookupService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDataService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.util.AqcuTimeUtils;
-import gov.usgs.aqcu.util.BigDecimalSummaryStatistics;
-import gov.usgs.aqcu.util.DoubleWithDisplayUtil;
 import gov.usgs.aqcu.util.TimeSeriesUtils;
 
 @Service
@@ -71,35 +67,15 @@ public class SiteVisitPeakReportBuilderService {
 		SiteVisitPeakReport report = new SiteVisitPeakReport();
 		
 		TimeSeriesDescription primaryDescription = timeSeriesDescriptionListService.getTimeSeriesDescription(requestParameters.getPrimaryTimeseriesIdentifier());
-		String locationIdentifier = primaryDescription.getLocationIdentifier();
 		ZoneOffset zoneOffset = TimeSeriesUtils.getZoneOffset(primaryDescription);
-		List<SVPReportReading> readings = getFieldVisitReadings(locationIdentifier, zoneOffset, requestParameters);
 		TimeSeriesDataServiceResponse primaryTsCorrected = timeSeriesDataService.get(requestParameters.getPrimaryTimeseriesIdentifier(), requestParameters, zoneOffset, false, false, false, null);
-		SVPReportMetadata reportMetadata = getMetadata(requestParameters, primaryDescription, primaryTsCorrected);
 
-		for (SVPReportReading reading : readings) {
-			if (null != reading.getLastVisitPrior()) {
-				List<TimeSeriesPoint> points = getPointsBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getPoints());
-				List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())
-					.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
-				
-				if(!qualifiers.isEmpty()) {
-					reading.getAssociatedIvQualifiers().addAll(qualifiers);
-				}
-				
-				MinMaxData minMaxData = getMinMaxData(points);
-				MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
-				reading.setAssociatedIvTime(minMaxPoint.getTime());
-				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
-			}
-		}
-
-		report.setReadings(readings);
-		report.setReportMetadata(reportMetadata);
+		report.setReadings(getFieldVisitReadings(primaryDescription.getLocationIdentifier(), zoneOffset, requestParameters, primaryTsCorrected));
+		report.setReportMetadata(getMetadata(requestParameters, primaryDescription, primaryTsCorrected));
 		return report;
 	}
 
-	protected List<SVPReportReading> getFieldVisitReadings(String locationIdentifier, ZoneOffset zoneOffset, SiteVisitPeakRequestParameters requestParameters) {
+	protected List<SVPReportReading> getFieldVisitReadings(String locationIdentifier, ZoneOffset zoneOffset, SiteVisitPeakRequestParameters requestParameters, TimeSeriesDataServiceResponse primaryTsCorrected) {
 		List<SVPReportReading> readings = new ArrayList<>();
 
 		// Process field visits
@@ -120,27 +96,24 @@ public class SiteVisitPeakReportBuilderService {
 		// Calculate last valid visit
 		readings = new LastValidVisitCalculator().fill(readings);
 
+		for (SVPReportReading reading : readings) {
+			if (null != reading.getLastVisitPrior()) {
+				List<TimeSeriesPoint> points = getPointsBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getPoints());
+				List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())
+					.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
+				
+				if(!qualifiers.isEmpty()) {
+					reading.getAssociatedIvQualifiers().addAll(qualifiers);
+				}
+				
+				MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
+				MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
+				reading.setAssociatedIvTime(minMaxPoint.getTime());
+				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
+			}
+		}
+
 		return readings;
-	}
-
-	/**
-	 * This method should only be called if the timeSeriesPoints list is not null.
-	 */
-	protected MinMaxData getMinMaxData(List<TimeSeriesPoint> timeSeriesPoints) {
-		Map<BigDecimal, List<MinMaxPoint>> minMaxPoints = timeSeriesPoints.parallelStream()
-				.map(x -> {
-					MinMaxPoint point = new MinMaxPoint(x.getTimestamp().getDateTimeOffset(), DoubleWithDisplayUtil.getRoundedValue(x.getValue()));
-					return point;
-				})
-				.filter(x -> x.getValue() != null)
-				.collect(Collectors.groupingByConcurrent(MinMaxPoint::getValue));
-
-		BigDecimalSummaryStatistics stats = minMaxPoints.keySet().parallelStream()
-				.collect(BigDecimalSummaryStatistics::new,
-						BigDecimalSummaryStatistics::accept,
-						BigDecimalSummaryStatistics::combine);
-
-		return new MinMaxData(stats.getMin(), stats.getMax(), minMaxPoints);
 	}
 
 	protected List<TimeSeriesPoint> getPointsBetweenDates(Instant startDate, Instant endDate, List<TimeSeriesPoint> points) {
