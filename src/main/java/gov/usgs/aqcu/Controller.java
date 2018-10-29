@@ -1,7 +1,5 @@
 package gov.usgs.aqcu;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,8 +24,6 @@ import gov.usgs.aqcu.parameter.SiteVisitPeakRequestParameters;
 @RequestMapping("/sitevisitpeak")
 public class Controller {
 	public static final String UNKNOWN_USERNAME = "unknown";
-
-	private static final Logger LOG = LoggerFactory.getLogger(Controller.class);
 	private Gson gson;
 	private SiteVisitPeakReportBuilderService reportBuilderService;
 	private JavaToRClient javaToRClient;

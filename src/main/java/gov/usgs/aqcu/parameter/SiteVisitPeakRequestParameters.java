@@ -1,34 +1,26 @@
 package gov.usgs.aqcu.parameter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SiteVisitPeakRequestParameters extends ReportRequestParameters {
 
-	public static String ALLOWED_TYPES = "CrestStageGage,MaximumMinimumGage";
-	private List<String> excludedComments;
+	private Boolean excludedComments;
 
 	public SiteVisitPeakRequestParameters() {
-		excludedComments = new ArrayList<>();
+		excludedComments = false;
 	}
 
-	public List<String> getExcludedComments() {		
+	public Boolean getExcludedComments() {		
 		return excludedComments;
 	}
 
-	public void setExcludedComments(List<String> val) {
-		this.excludedComments = val != null ? val : new ArrayList<>();
+	public void setExcludedComments(Boolean val) {
+		this.excludedComments = val != null ? val : false;
 	}
 
 	@Override 
 	public String getAsQueryString(String overrideIdentifier, boolean absoluteTime) {
 		String queryString = super.getAsQueryString(overrideIdentifier, absoluteTime);
 		
-		queryString += "allowedTypes=" + ALLOWED_TYPES;
-
-		if(getExcludedComments().size() > 0) {
-			queryString += "&excludedComments=" + String.join(",", excludedComments);
-		}
+		queryString += "&excludeComments=" + getExcludedComments();
 
 		return queryString;
 	}

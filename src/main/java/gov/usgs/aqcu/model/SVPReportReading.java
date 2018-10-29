@@ -26,16 +26,12 @@ public class SVPReportReading {
 		if (null != reading.getComments()) {
 			this.comments.add(reading.getComments());
 		}
-//		lastVisitPrior is set after creation
 		this.time = reading.getTime();
 		this.monitoringMethod = reading.getMonitoringMethod();
 		this.uncertainty = reading.getUncertainty().getDisplay();
 		this.value = reading.getValue().getDisplay();
 		this.party = party;
 		this.sublocation = reading.getSubLocationIdentifier();
-//		associatedIvValue is set after creation
-//		associatedIvTime is set after creation
-//		associatedIvQualifiers is set after creation
 	}
 
 	public Instant getVisitTime() {
