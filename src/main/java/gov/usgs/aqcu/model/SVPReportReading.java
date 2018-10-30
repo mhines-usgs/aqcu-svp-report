@@ -28,8 +28,8 @@ public class SVPReportReading {
 		}
 		this.time = reading.getTime();
 		this.monitoringMethod = reading.getMonitoringMethod();
-		this.uncertainty = reading.getUncertainty().getDisplay();
-		this.value = reading.getValue().getDisplay();
+		this.uncertainty = reading.getUncertainty() != null ? reading.getUncertainty().getDisplay() : null;
+		this.value = reading.getValue() != null ? reading.getValue().getDisplay() : null;
 		this.party = party;
 		this.sublocation = reading.getSubLocationIdentifier();
 	}

@@ -90,30 +90,34 @@ public class SiteVisitPeakReportBuilderService {
 					.map(r -> new SVPReportReading(fieldVisitDescription.getStartTime(), inspectionActivity.getParty(), r))
 					.collect(Collectors.toList())
 				);
-			}
-		}
 
-		// Calculate last valid visit
-		readings = new LastValidVisitCalculator().fill(readings);
-
-		for (SVPReportReading reading : readings) {
-			if (null != reading.getLastVisitPrior()) {
-				List<TimeSeriesPoint> points = getPointsBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getPoints());
-				List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())
-					.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
-				
-				if(!qualifiers.isEmpty()) {
-					reading.getAssociatedIvQualifiers().addAll(qualifiers);
-				}
-				
-				MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
-				MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
-				reading.setAssociatedIvTime(minMaxPoint.getTime());
-				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
+				// Add associated IV data
+				readings = new LastValidVisitCalculator().fill(readings).stream()
+					.map(r -> addAssociatedIvDataToReading(r, primaryTsCorrected))
+					.collect(Collectors.toList());
 			}
 		}
 
 		return readings;
+	}
+
+	protected SVPReportReading addAssociatedIvDataToReading(SVPReportReading reading, TimeSeriesDataServiceResponse primaryTsCorrected) {
+		if (null != reading.getLastVisitPrior()) {
+			List<TimeSeriesPoint> points = getPointsBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getPoints());
+			List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())
+				.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
+			
+			if(!qualifiers.isEmpty()) {
+				reading.getAssociatedIvQualifiers().addAll(qualifiers);
+			}
+			
+			MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
+			MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
+			reading.setAssociatedIvTime(minMaxPoint.getTime());
+			reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
+		}
+
+		return reading;
 	}
 
 	protected List<TimeSeriesPoint> getPointsBetweenDates(Instant startDate, Instant endDate, List<TimeSeriesPoint> points) {
@@ -149,7 +153,7 @@ public class SiteVisitPeakReportBuilderService {
 	protected SVPReportMetadata getMetadata(SiteVisitPeakRequestParameters requestParameters, TimeSeriesDescription primaryDescription, TimeSeriesDataServiceResponse primaryTsCorrected) {
 		SVPReportMetadata metadata = new SVPReportMetadata();
 		metadata.setTitle(REPORT_TITLE);
-		metadata.setExcludeComments(requestParameters.getExcludedComments());
+		metadata.setExcludeComments(requestParameters.getExcludeComments());
 		metadata.setTimeseriesLabel(primaryDescription.getIdentifier());
 		metadata.setTimezone(primaryDescription.getUtcOffset());
 		metadata.setStartDate(requestParameters.getStartInstant(ZoneOffset.UTC));

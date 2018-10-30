@@ -2,25 +2,25 @@ package gov.usgs.aqcu.parameter;
 
 public class SiteVisitPeakRequestParameters extends ReportRequestParameters {
 
-	private Boolean excludedComments;
+	private Boolean excludeComments;
 
 	public SiteVisitPeakRequestParameters() {
-		excludedComments = false;
+		excludeComments = false;
 	}
 
-	public Boolean getExcludedComments() {		
-		return excludedComments;
+	public Boolean getExcludeComments() {		
+		return excludeComments;
 	}
 
-	public void setExcludedComments(Boolean val) {
-		this.excludedComments = val != null ? val : false;
+	public void setExcludeComments(Boolean val) {
+		this.excludeComments = val != null ? val : false;
 	}
 
 	@Override 
 	public String getAsQueryString(String overrideIdentifier, boolean absoluteTime) {
 		String queryString = super.getAsQueryString(overrideIdentifier, absoluteTime);
 		
-		queryString += "&excludeComments=" + getExcludedComments();
+		queryString += "&excludeComments=" + getExcludeComments();
 
 		return queryString;
 	}
