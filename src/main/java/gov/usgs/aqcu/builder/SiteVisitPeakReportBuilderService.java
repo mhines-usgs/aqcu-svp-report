@@ -91,10 +91,13 @@ public class SiteVisitPeakReportBuilderService {
 					.collect(Collectors.toList())
 				);
 
+				// Add last valid visits
+				new LastValidVisitCalculator().fill(readings);
+				
 				// Add associated IV data
-				readings = new LastValidVisitCalculator().fill(readings).stream()
-					.map(r -> addAssociatedIvDataToReading(r, primaryTsCorrected))
-					.collect(Collectors.toList());
+				for(SVPReportReading reading : readings) {
+					addAssociatedIvDataToReading(reading, primaryTsCorrected);
+				}
 			}
 		}
 
@@ -108,7 +111,7 @@ public class SiteVisitPeakReportBuilderService {
 				.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
 			
 			if(!qualifiers.isEmpty()) {
-				reading.getAssociatedIvQualifiers().addAll(qualifiers);
+				reading.setAssociatedIvQualifiers(qualifiers);
 			}
 			
 			MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
