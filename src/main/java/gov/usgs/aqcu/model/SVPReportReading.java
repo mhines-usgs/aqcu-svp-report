@@ -22,6 +22,7 @@ public class SVPReportReading {
 	private List<AssociatedIvQualifier> associatedIvQualifiers;
 	
 	public SVPReportReading(Instant visitTime, String party, Reading reading) {
+		this.associatedIvQualifiers = new ArrayList<>();
 		this.visitTime = visitTime;
 		if (null != reading.getComments()) {
 			this.comments.add(reading.getComments());
@@ -123,9 +124,6 @@ public class SVPReportReading {
 	}
 
 	public List<AssociatedIvQualifier> getAssociatedIvQualifiers() {
-		if (null == associatedIvQualifiers) {
-			associatedIvQualifiers = new ArrayList<>();
-		}
 		return associatedIvQualifiers;
 	}
 
