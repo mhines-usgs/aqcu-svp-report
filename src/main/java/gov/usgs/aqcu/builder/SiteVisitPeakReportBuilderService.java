@@ -23,7 +23,7 @@ import gov.usgs.aqcu.model.AssociatedIvQualifier;
 import gov.usgs.aqcu.model.MinMaxData;
 import gov.usgs.aqcu.model.MinMaxPoint;
 import gov.usgs.aqcu.model.SVPReportMetadata;
-import gov.usgs.aqcu.model.SVPReportReading;
+import gov.usgs.aqcu.model.FieldVisitReading;
 import gov.usgs.aqcu.model.SiteVisitPeakReport;
 import gov.usgs.aqcu.parameter.SiteVisitPeakRequestParameters;
 import gov.usgs.aqcu.retrieval.FieldVisitDataService;
@@ -41,6 +41,7 @@ public class SiteVisitPeakReportBuilderService {
 	public static final String REPORT_TYPE = "siteVisitPeak";
 
 	private TimeSeriesDescriptionListService timeSeriesDescriptionListService;
+	private FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService;
 	private FieldVisitDescriptionService fieldVisitDescriptionService;
 	private FieldVisitDataService fieldVisitDataService;
 	private LocationDescriptionListService locationDescriptionListService;
@@ -50,12 +51,14 @@ public class SiteVisitPeakReportBuilderService {
 	@Autowired
 	public SiteVisitPeakReportBuilderService(
 			TimeSeriesDescriptionListService timeSeriesDescriptionListService,
+			FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService,
 			FieldVisitDescriptionService fieldVisitDescriptionService,
 			FieldVisitDataService fieldVisitDataService,
 			LocationDescriptionListService locationDescriptionListService,
 			TimeSeriesDataService timeSeriesDataService,
 			QualifierLookupService qualifierLookupService) {
 		this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
+		this.fieldVisitReadingsBuilderService = fieldVisitReadingsBuilderService;
 		this.fieldVisitDescriptionService = fieldVisitDescriptionService;
 		this.fieldVisitDataService = fieldVisitDataService;
 		this.locationDescriptionListService = locationDescriptionListService;
@@ -75,36 +78,36 @@ public class SiteVisitPeakReportBuilderService {
 		return report;
 	}
 
-	protected List<SVPReportReading> getFieldVisitReadings(String locationIdentifier, ZoneOffset zoneOffset, SiteVisitPeakRequestParameters requestParameters, TimeSeriesDataServiceResponse primaryTsCorrected) {
-		List<SVPReportReading> readings = new ArrayList<>();
+	protected List<FieldVisitReading> getFieldVisitReadings(String locationIdentifier, ZoneOffset zoneOffset, SiteVisitPeakRequestParameters requestParameters, TimeSeriesDataServiceResponse primaryTsCorrected) {
+		List<FieldVisitReading> readings = new ArrayList<>();
 
 		// Process field visits
 		for (FieldVisitDescription fieldVisitDescription : fieldVisitDescriptionService.getDescriptions(locationIdentifier, zoneOffset, requestParameters)) {
 			FieldVisitDataServiceResponse fieldVisitDataServiceResponse = fieldVisitDataService.get(fieldVisitDescription.getIdentifier());
-			InspectionActivity inspectionActivity = fieldVisitDataServiceResponse.getInspectionActivity();
+			List<FieldVisitReading> rawReadings = fieldVisitReadingsBuilderService.extractReadings(fieldVisitDescription, fieldVisitDataServiceResponse, null);
 
 			// Extract only ExtremeMax Readings
-			if(inspectionActivity != null && inspectionActivity.getReadings() != null) {
-				readings.addAll(inspectionActivity.getReadings().stream()
+			if(rawReadings != null && !rawReadings.isEmpty()) {
+				readings.addAll(rawReadings.stream()
 					.filter(r -> ReadingType.ExtremeMax.equals(r.getReadingType()))
-					.map(r -> new SVPReportReading(fieldVisitDescription.getStartTime(), inspectionActivity.getParty(), r))
 					.collect(Collectors.toList())
 				);
-
-				// Add last valid visits
-				new LastValidVisitCalculator().fill(readings);
-				
-				// Add associated IV data
-				for(SVPReportReading reading : readings) {
-					addAssociatedIvDataToReading(reading, primaryTsCorrected);
-				}
 			}
+		}
+
+		// Process Extracted Readings
+		// Add last valid visits
+		new LastValidVisitCalculator().fill(readings);
+
+		// Add associated IV data
+		for(FieldVisitReading reading : readings) {
+			addAssociatedIvDataToReading(reading, primaryTsCorrected);
 		}
 
 		return readings;
 	}
 
-	protected SVPReportReading addAssociatedIvDataToReading(SVPReportReading reading, TimeSeriesDataServiceResponse primaryTsCorrected) {
+	protected FieldVisitReading addAssociatedIvDataToReading(FieldVisitReading reading, TimeSeriesDataServiceResponse primaryTsCorrected) {
 		if (null != reading.getLastVisitPrior()) {
 			List<TimeSeriesPoint> points = getPointsBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getPoints());
 			List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())

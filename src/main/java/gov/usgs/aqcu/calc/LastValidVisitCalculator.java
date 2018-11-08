@@ -7,16 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import gov.usgs.aqcu.model.SVPReportReading;
+import gov.usgs.aqcu.model.FieldVisitReading;
 
 //TODO needs testing
 public class LastValidVisitCalculator {
 	Map<String, Instant> lastVisitMap = new HashMap<>();
 
-	public List<SVPReportReading> fill(List<SVPReportReading> readings) {
-		Collections.sort(readings, new Comparator<SVPReportReading>() {
+	public List<FieldVisitReading> fill(List<FieldVisitReading> readings) {
+		Collections.sort(readings, new Comparator<FieldVisitReading>() {
 			@Override
-			public int compare(SVPReportReading reading1, SVPReportReading reading2) {
+			public int compare(FieldVisitReading reading1, FieldVisitReading reading2) {
 				if(reading1 == null && reading2 == null) {
 					return 0;
 				}
@@ -33,7 +33,7 @@ public class LastValidVisitCalculator {
 			}
 		});
 		
-		for(SVPReportReading reading : readings) {
+		for(FieldVisitReading reading : readings) {
 			String value = reading.getValue();
 			String method = reading.getMonitoringMethod();
 			

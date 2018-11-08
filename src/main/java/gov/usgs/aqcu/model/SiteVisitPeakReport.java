@@ -5,14 +5,14 @@ import java.util.List;
 
 public class SiteVisitPeakReport {
 	
-	private List<SVPReportReading> readings = new ArrayList<>();
+	private List<FieldVisitReading> readings = new ArrayList<>();
 	private SVPReportMetadata reportMetadata;
 	
-	public List<SVPReportReading> getReadings() {
+	public List<FieldVisitReading> getReadings() {
 		return readings;
 	}
 
-	public void setReadings(List<SVPReportReading> readings) {
+	public void setReadings(List<FieldVisitReading> readings) {
 		this.readings = readings;
 	}
 
