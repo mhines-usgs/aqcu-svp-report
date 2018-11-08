@@ -3,6 +3,7 @@ package gov.usgs.aqcu.builder;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescription;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.InspectionActivity;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.InspectionType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ReadingType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
@@ -39,6 +41,7 @@ import gov.usgs.aqcu.util.TimeSeriesUtils;
 public class SiteVisitPeakReportBuilderService {
 	public static final String REPORT_TITLE = "Site Visit Peak";
 	public static final String REPORT_TYPE = "siteVisitPeak";
+	private static final List<String> includeInspections = Arrays.asList(InspectionType.CrestStageGage.name(), InspectionType.MaximumMinimumGage.name());
 
 	private TimeSeriesDescriptionListService timeSeriesDescriptionListService;
 	private FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService;
@@ -84,9 +87,9 @@ public class SiteVisitPeakReportBuilderService {
 		// Process field visits
 		for (FieldVisitDescription fieldVisitDescription : fieldVisitDescriptionService.getDescriptions(locationIdentifier, zoneOffset, requestParameters)) {
 			FieldVisitDataServiceResponse fieldVisitDataServiceResponse = fieldVisitDataService.get(fieldVisitDescription.getIdentifier());
-			List<FieldVisitReading> rawReadings = fieldVisitReadingsBuilderService.extractReadings(fieldVisitDescription, fieldVisitDataServiceResponse, null);
+			List<FieldVisitReading> rawReadings = fieldVisitReadingsBuilderService.extractReadings(fieldVisitDescription.getStartTime(), fieldVisitDataServiceResponse, null, includeInspections);
 
-			// Extract only ExtremeMax Readings
+			// Keep only ExtremeMax Readings
 			if(rawReadings != null && !rawReadings.isEmpty()) {
 				readings.addAll(rawReadings.stream()
 					.filter(r -> ReadingType.ExtremeMax.equals(r.getReadingType()))
