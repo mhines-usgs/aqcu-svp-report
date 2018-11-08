@@ -40,7 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import gov.usgs.aqcu.model.SVPReportMetadata;
-import gov.usgs.aqcu.model.SVPReportReading;
+import gov.usgs.aqcu.model.FieldVisitReading;
 import gov.usgs.aqcu.model.SiteVisitPeakReport;
 import gov.usgs.aqcu.parameter.SiteVisitPeakRequestParameters;
 import gov.usgs.aqcu.retrieval.FieldVisitDataService;
@@ -67,11 +67,13 @@ public class SiteVisitPeakReportBuilderServiceTest {
 	@MockBean
 	private QualifierLookupService qualifierLookupService;
 	
+	private FieldVisitReadingsBuilderService readingsService;	
 	private SiteVisitPeakReportBuilderService service;
 
 	@Before
 	public void setup() {
-		service = new SiteVisitPeakReportBuilderService(timeSeriesDescriptionListService, fieldVisitDescriptionService, fieldVisitDataService, locationDescriptionListService, timeSeriesDataService, qualifierLookupService);
+		readingsService = new FieldVisitReadingsBuilderService();
+		service = new SiteVisitPeakReportBuilderService(timeSeriesDescriptionListService, readingsService, fieldVisitDescriptionService, fieldVisitDataService, locationDescriptionListService, timeSeriesDataService, qualifierLookupService);
 	}
 
 	@Test
@@ -160,35 +162,35 @@ public class SiteVisitPeakReportBuilderServiceTest {
 			.setPoints(getTimeSeriesPoints())
 			.setQualifiers(getQualifiers());
 		
-		SVPReportReading sr = new SVPReportReading(Instant.parse("2018-02-03T12:00:00Z"), "test", new Reading());
+		FieldVisitReading sr = new FieldVisitReading(Instant.parse("2018-02-03T12:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
 		sr.setLastVisitPrior(Instant.parse("2018-02-01T00:00:00Z"));
-		SVPReportReading result = service.addAssociatedIvDataToReading(sr, tsData);
+		FieldVisitReading result = service.addAssociatedIvDataToReading(sr, tsData);
 		assertEquals(result.getAssociatedIvQualifiers().size(), 2);
 		assertEquals(result.getAssociatedIvTime(), Instant.parse("2018-02-02T12:00:00Z"));
 		assertEquals(result.getAssociatedIvValue(), "3.0");
 
-		sr = new SVPReportReading(Instant.parse("2018-02-02T12:00:00Z"), "test", new Reading());
+		sr = new FieldVisitReading(Instant.parse("2018-02-02T12:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
 		sr.setLastVisitPrior(Instant.parse("2018-02-01T00:00:00Z"));
 		result = service.addAssociatedIvDataToReading(sr, tsData);
 		assertEquals(result.getAssociatedIvQualifiers().size(), 1);
 		assertEquals(result.getAssociatedIvTime(), Instant.parse("2018-02-02T00:00:00Z"));
 		assertEquals(result.getAssociatedIvValue(), "3.0");
 
-		sr = new SVPReportReading(Instant.parse("2018-02-01T12:00:00Z"), "test", new Reading());
+		sr = new FieldVisitReading(Instant.parse("2018-02-01T12:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
 		sr.setLastVisitPrior(Instant.parse("2018-02-01T00:00:00Z"));
 		result = service.addAssociatedIvDataToReading(sr, tsData);
 		assertEquals(result.getAssociatedIvQualifiers().size(), 1);
 		assertEquals(result.getAssociatedIvTime(), Instant.parse("2018-02-01T00:00:00Z"));
 		assertEquals(result.getAssociatedIvValue(), "1.0");
 
-		sr = new SVPReportReading(Instant.parse("2018-02-02T00:00:00Z"), "test", new Reading());
+		sr = new FieldVisitReading(Instant.parse("2018-02-02T00:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
 		sr.setLastVisitPrior(Instant.parse("2018-02-01T12:00:00Z"));
 		result = service.addAssociatedIvDataToReading(sr, tsData);
 		assertEquals(result.getAssociatedIvQualifiers().size(), 1);
 		assertEquals(result.getAssociatedIvTime(), Instant.parse("2018-02-01T12:00:00Z"));
 		assertEquals(result.getAssociatedIvValue(), "2.0");
 
-		sr = new SVPReportReading(Instant.parse("2018-02-03T00:00:00Z"), "test", new Reading());
+		sr = new FieldVisitReading(Instant.parse("2018-02-03T00:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
 		sr.setLastVisitPrior(Instant.parse("2018-02-02T12:00:00Z"));
 		result = service.addAssociatedIvDataToReading(sr, tsData);
 		assertEquals(result.getAssociatedIvQualifiers().size(), 0);
@@ -213,7 +215,7 @@ public class SiteVisitPeakReportBuilderServiceTest {
 			.setPoints(getTimeSeriesPoints())
 			.setQualifiers(getQualifiers());
 
-		List<SVPReportReading> result = service.getFieldVisitReadings("location", ZoneOffset.UTC, new SiteVisitPeakRequestParameters(), tsData);
+		List<FieldVisitReading> result = service.getFieldVisitReadings("location", ZoneOffset.UTC, new SiteVisitPeakRequestParameters(), tsData);
 		assertEquals(result.size(), 4);
 		assertNull(result.get(0).getLastVisitPrior());
 		assertNull(result.get(1).getLastVisitPrior());
