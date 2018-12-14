@@ -115,14 +115,16 @@ public class SiteVisitPeakReportBuilderService {
 			List<AssociatedIvQualifier> qualifiers = getQualifiersBetweenDates(reading.getLastVisitPrior(), reading.getVisitTime(), primaryTsCorrected.getQualifiers())
 				.stream().map(q -> new AssociatedIvQualifier(q)).collect(Collectors.toList());
 			
-			if(!qualifiers.isEmpty()) {
+			if(qualifiers != null && !qualifiers.isEmpty()) {
 				reading.setAssociatedIvQualifiers(qualifiers);
 			}
 			
-			MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
-			MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
-			reading.setAssociatedIvTime(minMaxPoint.getTime());
-			reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
+			if(points != null && !points.isEmpty()) {
+				MinMaxData minMaxData = TimeSeriesUtils.getMinMaxData(points);
+				MinMaxPoint minMaxPoint = minMaxData.getMax().get(minMaxData.getMax().size()-1);
+				reading.setAssociatedIvTime(minMaxPoint.getTime());
+				reading.setAssociatedIvValue(minMaxPoint.getValue().toPlainString());
+			}
 		}
 
 		return reading;
