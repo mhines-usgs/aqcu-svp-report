@@ -157,6 +157,20 @@ public class SiteVisitPeakReportBuilderServiceTest {
 	}
 
 	@Test
+	public void addAssociatedIvDataToReadingEmptyTest() {
+		TimeSeriesDataServiceResponse tsData = new TimeSeriesDataServiceResponse()
+			.setPoints(new ArrayList<>())
+			.setQualifiers(new ArrayList<>());
+		
+		FieldVisitReading sr = new FieldVisitReading(Instant.parse("2018-02-03T12:00:00Z"), "test", "test", Arrays.asList("test"), new Reading());
+		sr.setLastVisitPrior(Instant.parse("2018-02-01T00:00:00Z"));
+		FieldVisitReading result = service.addAssociatedIvDataToReading(sr, tsData);
+		assertEquals(result.getAssociatedIvQualifiers().size(), 0);
+		assertNull(result.getAssociatedIvTime());
+		assertNull(result.getAssociatedIvValue());
+	}
+
+	@Test
 	public void addAssociatedIvDataToReadingTest() {
 		TimeSeriesDataServiceResponse tsData = new TimeSeriesDataServiceResponse()
 			.setPoints(getTimeSeriesPoints())
