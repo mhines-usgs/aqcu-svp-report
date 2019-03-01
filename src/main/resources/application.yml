@@ -19,6 +19,7 @@ aquarius:
     password: ${aquariusServicePassword}
     retries:
       unauthorized: ${aquariusUnauthorizedRetires:3}
+    timeout: 30000
 
 security:
   require-ssl: true
@@ -42,6 +43,12 @@ eureka:
 feign:
   hystrix:
     enabled: true
+  client:
+    config:
+      javaToR:
+        connectTimeout: ${javaToRServiceConnectTimeout:6000}
+        readTimeout: ${javaToRServiceReadTimeout:300000}
+        loggerLevel: full
 
 hystrix:
   shareSecurityContext: true
@@ -51,7 +58,7 @@ hystrix:
         isolation:
           strategy: THREAD
           thread:
-            timeoutInMilliseconds: ${hystrixThreadTimeout}
+            timeoutInMilliseconds: ${hystrixThreadTimeout:600000}
   threadpool:
     default:
       maxQueueSize: ${hystrixMaxQueueSize:200}
